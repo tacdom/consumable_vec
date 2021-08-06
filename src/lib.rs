@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-struct AtReplies {
+pub struct AtReplies {
     data: Vec<String>,
 }
 
@@ -51,22 +51,22 @@ impl len_trait::Empty for AtReplies {
     }
 }
 
-struct SharedAtReplies {
+pub struct SharedAtReplies {
     data: Arc<Mutex<AtReplies>>,
 }
 
 impl SharedAtReplies {
-    fn new(data: Option<Vec<String>>) -> Self {
+    pub fn new(data: Option<Vec<String>>) -> Self {
         SharedAtReplies {
             data: Arc::new(Mutex::new(AtReplies::new(data))),
         }
     }
 
-    fn add(&mut self, reply: String) {
+    pub fn add(&mut self, reply: String) {
         self.data.lock().unwrap().add(reply);
     }
 
-    fn consume(&mut self, pattern: &str) -> Option<AtReplies> {
+    pub fn consume(&mut self, pattern: &str) -> Option<AtReplies> {
         self.data.lock().unwrap().consume(pattern)
     }
 }
@@ -83,10 +83,8 @@ impl len_trait::Empty for SharedAtReplies {
     }
 }
 
-fn main() {
-    println!("Hello, world!");
-}
 
+#[allow(unused_imports)]
 mod test_at_replies {
     use super::AtReplies;
     use len_trait::Len;
@@ -138,10 +136,10 @@ mod test_at_replies {
 }
 
 
+#[allow(unused_imports)]
 mod test_shared_at_replies {
-    use crate::SharedAtReplies;
-
-    use super::AtReplies;
+ 
+    use super::SharedAtReplies;
     use len_trait::Len;
 
     #[test]
