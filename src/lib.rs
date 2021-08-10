@@ -20,17 +20,20 @@ impl ConsumableVec {
     }
 
     fn consume(&mut self, pattern: &str) -> Option<Self> {
+        let trimmed_pattern = pattern.trim();
+        
         let val = self
             .data
             .iter()
-            .filter(|r| r.trim().starts_with(pattern.trim()))
+            .filter(|r| r.trim().starts_with(trimmed_pattern))
             .map(|x| x.to_string())
             .collect::<Vec<String>>();
 
+        
         // remove all values just consumed
         // nighlty rust has drain_filter which could do
         // filtering and removal in one step
-        self.data.retain(|d| !d.starts_with(pattern));
+        self.data.retain(|d| !d.starts_with(trimmed_pattern));
 
         if !val.is_empty() {
             Some(ConsumableVec::new(Some(val)))
@@ -144,7 +147,8 @@ mod test_at_replies {
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
-        let consumed = at.consume("da").unwrap();
+        assert_eq!(3, at.len());
+        let _ = at.consume("da").unwrap();
         assert_eq!(1, at.len());
     }
 }
@@ -197,6 +201,7 @@ mod test_shared_at_replies {
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
+        assert_eq!(3, at.len());
         let _ = at.consume("da").unwrap();
         assert_eq!(1, at.len());
     }
