@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+#[derive(Debug,Clone)]
 pub struct ConsumableVec {
     data: Vec<String>,
 }
@@ -22,7 +23,7 @@ impl ConsumableVec {
         let val = self
             .data
             .iter()
-            .filter(|r| r.starts_with(pattern))
+            .filter(|r| r.trim().starts_with(pattern.trim()))
             .map(|x| x.to_string())
             .collect::<Vec<String>>();
 
@@ -36,6 +37,14 @@ impl ConsumableVec {
         } else {
             None
         }
+    }
+
+    fn clear(&mut self ) {
+        self.data.clear();
+    }
+
+    pub fn inner(&self) -> &Vec<String> {
+        &self.data
     }
 }
 
@@ -51,6 +60,7 @@ impl len_trait::Empty for ConsumableVec {
     }
 }
 
+#[derive(Debug,Clone)]
 pub struct SharedConsumableVec {
     data: Arc<Mutex<ConsumableVec>>,
 }
@@ -62,12 +72,16 @@ impl SharedConsumableVec {
         }
     }
 
-    pub fn add(&mut self, reply: String) {
+    pub fn add(&self, reply: String) {
         self.data.lock().unwrap().add(reply);
     }
 
-    pub fn consume(&mut self, pattern: &str) -> Option<ConsumableVec> {
+    pub fn consume(&self, pattern: &str) -> Option<ConsumableVec> {
         self.data.lock().unwrap().consume(pattern)
+    }
+
+    pub fn clear(&self) {
+        self.data.lock().unwrap().clear();
     }
 }
 
