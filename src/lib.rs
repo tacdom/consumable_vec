@@ -1,12 +1,12 @@
 use std::sync::{Arc, Mutex};
 
-pub struct AtReplies {
+pub struct ConsumableVec {
     data: Vec<String>,
 }
 
-impl AtReplies {
+impl ConsumableVec {
     fn new(data: Option<Vec<String>>) -> Self {
-        AtReplies {
+        ConsumableVec {
             data: match data {
                 Some(d) => d,
                 None => Vec::new(),
@@ -32,33 +32,33 @@ impl AtReplies {
         self.data.retain(|d| !d.starts_with(pattern));
 
         if !val.is_empty() {
-            Some(AtReplies::new(Some(val)))
+            Some(ConsumableVec::new(Some(val)))
         } else {
             None
         }
     }
 }
 
-impl len_trait::Len for AtReplies {
+impl len_trait::Len for ConsumableVec {
     fn len(&self) -> usize {
         self.data.len()
     }
 }
 
-impl len_trait::Empty for AtReplies {
+impl len_trait::Empty for ConsumableVec {
     fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 }
 
-pub struct SharedAtReplies {
-    data: Arc<Mutex<AtReplies>>,
+pub struct SharedConsumableVec {
+    data: Arc<Mutex<ConsumableVec>>,
 }
 
-impl SharedAtReplies {
+impl SharedConsumableVec {
     pub fn new(data: Option<Vec<String>>) -> Self {
-        SharedAtReplies {
-            data: Arc::new(Mutex::new(AtReplies::new(data))),
+        SharedConsumableVec {
+            data: Arc::new(Mutex::new(ConsumableVec::new(data))),
         }
     }
 
@@ -66,18 +66,18 @@ impl SharedAtReplies {
         self.data.lock().unwrap().add(reply);
     }
 
-    pub fn consume(&mut self, pattern: &str) -> Option<AtReplies> {
+    pub fn consume(&mut self, pattern: &str) -> Option<ConsumableVec> {
         self.data.lock().unwrap().consume(pattern)
     }
 }
 
-impl len_trait::Len for SharedAtReplies {
+impl len_trait::Len for SharedConsumableVec {
     fn len(&self) -> usize {
         self.data.lock().unwrap().len()
     }
 }
 
-impl len_trait::Empty for SharedAtReplies {
+impl len_trait::Empty for SharedConsumableVec {
     fn is_empty(&self) -> bool {
         self.data.lock().unwrap().is_empty()
     }
@@ -86,26 +86,26 @@ impl len_trait::Empty for SharedAtReplies {
 
 #[allow(unused_imports)]
 mod test_at_replies {
-    use super::AtReplies;
+    use super::ConsumableVec;
     use len_trait::Len;
 
     #[test]
     fn consume_when_pattern_not_in_replies_should_return_none() {
-        let mut at = AtReplies::new(None);
+        let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
         assert!(at.consume("pattern").is_none());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_return_some() {
-        let mut at = AtReplies::new(None);
+        let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
         assert!(at.consume("da").is_some());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_have_data() {
-        let mut at = AtReplies::new(None);
+        let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
         at.add("ata".to_string());
         let consumed = at.consume("da").unwrap();
@@ -115,7 +115,7 @@ mod test_at_replies {
 
     #[test]
     fn consume_when_pattern_in_replies_multiple_times_should_have_data_multipletimes() {
-        let mut at = AtReplies::new(None);
+        let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
@@ -126,7 +126,7 @@ mod test_at_replies {
 
     #[test]
     fn consume_should_remove_values_from_data() {
-        let mut at = AtReplies::new(None);
+        let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
@@ -139,26 +139,26 @@ mod test_at_replies {
 #[allow(unused_imports)]
 mod test_shared_at_replies {
  
-    use super::SharedAtReplies;
+    use super::SharedConsumableVec;
     use len_trait::Len;
 
     #[test]
     fn consume_when_pattern_not_in_replies_should_return_none() {
-        let mut at = SharedAtReplies::new(None);
+        let mut at = SharedConsumableVec::new(None);
         at.add("data".to_string());
         assert!(at.consume("pattern").is_none());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_return_some() {
-        let mut at = SharedAtReplies::new(None);
+        let mut at = SharedConsumableVec::new(None);
         at.add("data".to_string());
         assert!(at.consume("da").is_some());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_have_data() {
-        let mut at = SharedAtReplies::new(None);
+        let mut at = SharedConsumableVec::new(None);
         at.add("data".to_string());
         at.add("ata".to_string());
         let consumed = at.consume("da").unwrap();
@@ -168,7 +168,7 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_when_pattern_in_replies_multiple_times_should_have_data_multipletimes() {
-        let mut at = SharedAtReplies::new(None);
+        let mut at = SharedConsumableVec::new(None);
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
@@ -179,7 +179,7 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_should_remove_values_from_data() {
-        let mut at = SharedAtReplies::new(None);
+        let mut at = SharedConsumableVec::new(None);
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
