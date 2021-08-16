@@ -1,12 +1,18 @@
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug,Clone)]
-pub struct ConsumableVec {
-    data: Vec<String>,
+pub trait Consumable {
+    type Item;
+
+    fn consume(&mut self, pattern: &str) -> Option<Self::Item>;
 }
 
-impl ConsumableVec {
-    fn new(data: Option<Vec<String>>) -> Self {
+#[derive(Debug,Clone)]
+pub struct ConsumableVec<T> {
+    data: Vec<T>,
+}
+
+impl<T> ConsumableVec<T> {
+    fn new(data: Option<Vec<T>>) -> Self {
         ConsumableVec {
             data: match data {
                 Some(d) => d,
@@ -15,11 +21,35 @@ impl ConsumableVec {
         }
     }
 
-    fn add(&mut self, reply: String) {
+    fn add(&mut self, reply: T) {
         self.data.push(reply);
     }
 
-    fn consume(&mut self, pattern: &str) -> Option<Self> {
+    fn clear(&mut self ) {
+        self.data.clear();
+    }
+
+    pub fn inner(&self) -> &Vec<T> {
+        &self.data
+    }
+}
+
+impl<T> len_trait::Len for ConsumableVec<T> {
+    fn len(&self) -> usize {
+        self.data.len()
+    }
+}
+
+impl<T> len_trait::Empty for ConsumableVec<T> {
+    fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+}
+
+impl Consumable for ConsumableVec<String> {
+    type Item = ConsumableVec<String>;
+
+    fn consume(&mut self, pattern: &str) -> Option<Self::Item> {
         let trimmed_pattern = pattern.trim();
         
         let val = self
@@ -41,31 +71,11 @@ impl ConsumableVec {
             None
         }
     }
-
-    fn clear(&mut self ) {
-        self.data.clear();
-    }
-
-    pub fn inner(&self) -> &Vec<String> {
-        &self.data
-    }
-}
-
-impl len_trait::Len for ConsumableVec {
-    fn len(&self) -> usize {
-        self.data.len()
-    }
-}
-
-impl len_trait::Empty for ConsumableVec {
-    fn is_empty(&self) -> bool {
-        self.data.is_empty()
-    }
 }
 
 #[derive(Debug,Clone)]
 pub struct SharedConsumableVec {
-    data: Arc<Mutex<ConsumableVec>>,
+    data: Arc<Mutex<ConsumableVec<String>>>,
 }
 
 impl SharedConsumableVec {
@@ -79,7 +89,7 @@ impl SharedConsumableVec {
         self.data.lock().unwrap().add(reply);
     }
 
-    pub fn consume(&self, pattern: &str) -> Option<ConsumableVec> {
+    pub fn consume(&self, pattern: &str) -> Option<ConsumableVec<String>> {
         self.data.lock().unwrap().consume(pattern)
     }
 
@@ -101,9 +111,10 @@ impl len_trait::Empty for SharedConsumableVec {
 }
 
 
-#[allow(unused_imports)]
+
+#[cfg(test)]
 mod test_at_replies {
-    use super::ConsumableVec;
+    use super::*;
     use len_trait::Len;
 
     #[test]
