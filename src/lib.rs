@@ -3,7 +3,9 @@ use std::sync::{Arc, Mutex};
 pub trait Consumable {
     type Item;
 
-    fn consume(&mut self, pattern: &str) -> Option<Self::Item>;
+    fn consume(&self, pattern: &str) -> Option<Self::Item>;
+
+    fn consume_mut(&mut self, pattern: &str) -> Option<Self::Item>;
 }
 
 #[derive(Debug,Clone)]
@@ -49,7 +51,7 @@ impl<T> len_trait::Empty for ConsumableVec<T> {
 impl Consumable for ConsumableVec<String> {
     type Item = ConsumableVec<String>;
 
-    fn consume(&mut self, pattern: &str) -> Option<Self::Item> {
+    fn consume_mut(&mut self, pattern: &str) -> Option<Self::Item> {
         let trimmed_pattern = pattern.trim();
         
         let val = self
@@ -71,26 +73,26 @@ impl Consumable for ConsumableVec<String> {
             None
         }
     }
+
+    fn consume(&self, _: &str) -> Option<Self::Item> {
+        todo!()
+    }
 }
 
 #[derive(Debug,Clone)]
-pub struct SharedConsumableVec {
-    data: Arc<Mutex<ConsumableVec<String>>>,
+pub struct SharedConsumableVec<T> {
+    data: Arc<Mutex<ConsumableVec<T>>>,
 }
 
-impl SharedConsumableVec {
-    pub fn new(data: Option<Vec<String>>) -> Self {
+impl<T> SharedConsumableVec<T> {
+    pub fn new(data: Option<Vec<T>>) -> Self {
         SharedConsumableVec {
             data: Arc::new(Mutex::new(ConsumableVec::new(data))),
         }
     }
 
-    pub fn add(&self, reply: String) {
+    pub fn add(&self, reply: T) {
         self.data.lock().unwrap().add(reply);
-    }
-
-    pub fn consume(&self, pattern: &str) -> Option<ConsumableVec<String>> {
-        self.data.lock().unwrap().consume(pattern)
     }
 
     pub fn clear(&self) {
@@ -98,18 +100,30 @@ impl SharedConsumableVec {
     }
 }
 
-impl len_trait::Len for SharedConsumableVec {
+impl<T> len_trait::Len for SharedConsumableVec<T> {
     fn len(&self) -> usize {
         self.data.lock().unwrap().len()
     }
 }
 
-impl len_trait::Empty for SharedConsumableVec {
+impl<T> len_trait::Empty for SharedConsumableVec<T> {
     fn is_empty(&self) -> bool {
         self.data.lock().unwrap().is_empty()
     }
 }
 
+impl Consumable for SharedConsumableVec<String> {
+    type Item = ConsumableVec<String>;
+
+    fn consume(&self, pattern: &str) -> Option<Self::Item> {
+        self.data.lock().unwrap().consume_mut(pattern)
+    }
+
+    // do not implement mutable consumer for the shared reference
+    fn consume_mut(&mut self, _: &str) -> Option<Self::Item> {
+        None
+    }
+}
 
 
 #[cfg(test)]
@@ -121,14 +135,14 @@ mod test_at_replies {
     fn consume_when_pattern_not_in_replies_should_return_none() {
         let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
-        assert!(at.consume("pattern").is_none());
+        assert!(at.consume_mut("pattern").is_none());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_return_some() {
         let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
-        assert!(at.consume("da").is_some());
+        assert!(at.consume_mut("da").is_some());
     }
 
     #[test]
@@ -136,7 +150,7 @@ mod test_at_replies {
         let mut at = ConsumableVec::new(None);
         at.add("data".to_string());
         at.add("ata".to_string());
-        let consumed = at.consume("da").unwrap();
+        let consumed = at.consume_mut("da").unwrap();
         assert_eq!(1, consumed.len());
         assert_eq!("data".to_string(), consumed.data[0]);
     }
@@ -147,7 +161,7 @@ mod test_at_replies {
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
-        let consumed = at.consume("da").unwrap();
+        let consumed = at.consume_mut("da").unwrap();
         assert_eq!(2, consumed.len());
         assert_eq!("data2".to_string(), consumed.data[1]);
     }
@@ -159,16 +173,16 @@ mod test_at_replies {
         at.add("ata".to_string());
         at.add("data2".to_string());
         assert_eq!(3, at.len());
-        let _ = at.consume("da").unwrap();
+        let _ = at.consume_mut("da").unwrap();
         assert_eq!(1, at.len());
     }
 }
 
 
-#[allow(unused_imports)]
+#[cfg(test)]
 mod test_shared_at_replies {
  
-    use super::SharedConsumableVec;
+    use super::*;
     use len_trait::Len;
 
     #[test]
