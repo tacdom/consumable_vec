@@ -3,9 +3,13 @@ use std::sync::{Arc, Mutex};
 pub trait Consumable {
     type Item;
 
-    fn consume(&self, pattern: &str) -> Option<Self::Item>;
+    fn consume(&self, _pattern: &str) -> Option<Self::Item> {
+        None
+    }
 
-    fn consume_mut(&mut self, pattern: &str) -> Option<Self::Item>;
+    fn consume_mut(&mut self, _pattern: &str) -> Option<Self::Item> {
+        None
+    }
 }
 
 #[derive(Debug,Clone)]
@@ -73,10 +77,6 @@ impl Consumable for ConsumableVec<String> {
             None
         }
     }
-
-    fn consume(&self, _: &str) -> Option<Self::Item> {
-        todo!()
-    }
 }
 
 #[derive(Debug,Clone)]
@@ -117,11 +117,6 @@ impl Consumable for SharedConsumableVec<String> {
 
     fn consume(&self, pattern: &str) -> Option<Self::Item> {
         self.data.lock().unwrap().consume_mut(pattern)
-    }
-
-    // do not implement mutable consumer for the shared reference
-    fn consume_mut(&mut self, _: &str) -> Option<Self::Item> {
-        None
     }
 }
 
