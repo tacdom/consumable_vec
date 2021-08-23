@@ -180,9 +180,14 @@ impl Consumable for ConsumableVec<String> {
 /// });
 ///
 /// thread::spawn(move || {
-///     while let Some(consumed) = con_vec.consume("Produced".to_string()) {
+///    loop {
+///     if let Some(consumed) = con_vec.consume("Produced".to_string()) {
 ///         println!("{:?}", consumed);
-///     }   
+///         if consumed.inner().iter().filter(|c| c.contains("99")).count() > 0 {
+///             break;
+///         }
+///     }
+///    }   
 /// });
 /// ```
 /// 
