@@ -80,6 +80,12 @@ pub trait Consumable {
     }
 }
 
+/// Generic structure for storing consumable data of type T
+/// 
+/// When using this struct, ownership is in the reponsibility of the caller
+///
+/// Consumed data will be removed from the data pool. Consecutive consume calls
+/// with an identical pattern will most likely reurn `None`
 #[derive(Debug,Clone)]
 pub struct ConsumableVec<T> {
     data: Vec<T>,
@@ -132,7 +138,7 @@ impl Consumable for ConsumableVec<String> {
             .iter()
             .filter(|r| r.trim().starts_with(trimmed_pattern))
             .map(|x| x.to_string())
-            .collect::<Vec<String>>();
+            .collect::<Vec<Self::DataType>>();
 
         
         // remove all values just consumed
@@ -148,6 +154,39 @@ impl Consumable for ConsumableVec<String> {
     }
 }
 
+
+/// Generic structure for storing consumable data of type T in a shared Vector
+/// 
+/// This implementation is using atomic referenc counting (`Arc`) as well as 
+/// mutual exclusion (`Mutex`) to allow concurrent access to the inner data.
+///
+/// Consumed data will be removed from the data pool. Consecutive consume calls
+/// with an identical pattern will most likely return `None`, when no new data got
+/// produced
+///
+/// ## Example: 
+/// ```
+/// use consumable_vec::{SharedConsumableVec, Consumable};
+/// use std::thread;
+///
+/// let con_vec = SharedConsumableVec::new(None);
+///
+/// let producer = con_vec.clone();
+/// 
+/// thread::spawn(move || {
+///     for n in 1..100 {
+///         producer.add(format!("Produced: {}", n));
+///     }   
+/// });
+///
+/// thread::spawn(move || {
+///     while let Some(consumed) = con_vec.consume("Produced".to_string()) {
+///         println!("{:?}", consumed);
+///     }   
+/// });
+/// ```
+/// 
+/// 
 #[derive(Debug,Clone)]
 pub struct SharedConsumableVec<T> {
     data: Arc<Mutex<ConsumableVec<T>>>,
