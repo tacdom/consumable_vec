@@ -1,7 +1,7 @@
 # Consumable_Vec &emsp; [![Build Status]][actions] 
 
-[Build Status]: https://img.shields.io/github/workflow/status/consumable_vec/CI/main
-[actions]: https://github.com/consumable_vec/actions?query=branch%3Amain
+[Build Status]: https://img.shields.io/github/workflow/status/tacdom/consumable_vec/CheckAndBuild/main
+[actions]: https://github.com/tacdom/consumable_vec/actions?query=branch%3Amain
 
 **Consumable_Vec is a generic approach to create a mutual database for multiple producers and consumers**
 
