@@ -8,25 +8,24 @@
 //
 // SPDX-License-Identifier: MIT
 
-
 //! Provides a vector which content can be consumed
 //!
 //! This allows multiple producers to add data to a shared data base. Any consumer
 //! can take out data in a deleting manner if certain criteria are met, e.g. a search
 //! pattern is fulfilled in a `String` implementation.
-//! 
+//!
 //! This crate provides two different implementations:
-//! The struct `ConsumableVec` is a plain implementation of the trait `Consumable`. Here the 
+//! The struct `ConsumableVec` is a plain implementation of the trait `Consumable`. Here the
 //! user needs to take care of the ownership of the object when adding data or trying to consume
 //! data from it.    
 //! The struct `SharedConsumableVec` uses a `ConsumableVec` which can be referenced by multiple owners
-//! from multiple threads. 
+//! from multiple threads.
 
 use std::sync::{Arc, Mutex};
 
 /// Consume content from a data collection
 ///
-/// Consumption can be inmplemented in a mutabl or immutable way, or both. 
+/// Consumption can be inmplemented in a mutabl or immutable way, or both.
 /// Which implementation needs to be used is dependent on the using application.
 ///
 ///
@@ -49,7 +48,7 @@ use std::sync::{Arc, Mutex};
 ///                 .data
 ///                 .iter()
 ///                 .filter(|r| *r > &pattern)
-///                 .map(|x| x.to_owned()) 
+///                 .map(|x| x.to_owned())
 ///                 .collect::<Vec<u16>>();
 ///             self.data.retain(|d| d <= &pattern);
 ///
@@ -66,7 +65,7 @@ pub trait Consumable {
     type DataType;
 
     /// # Immutable consume method    
-    /// This shall be implemented for shared access, e.g. when inner Vector 
+    /// This shall be implemented for shared access, e.g. when inner Vector
     /// uses reference counters and mutexes to be changed.
     fn consume(&self, _pattern: Self::DataType) -> Option<Self::Item> {
         unimplemented!();
@@ -81,12 +80,12 @@ pub trait Consumable {
 }
 
 /// Generic structure for storing consumable data of type T
-/// 
+///
 /// When using this struct, ownership is in the reponsibility of the caller
 ///
 /// Consumed data will be removed from the data pool. Consecutive consume calls
 /// with an identical pattern will most likely reurn `None`
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct ConsumableVec<T> {
     data: Vec<T>,
 }
@@ -105,7 +104,7 @@ impl<T> ConsumableVec<T> {
         self.data.push(reply);
     }
 
-    fn clear(&mut self ) {
+    fn clear(&mut self) {
         self.data.clear();
     }
 
@@ -132,7 +131,7 @@ impl Consumable for ConsumableVec<String> {
 
     fn consume_mut(&mut self, pattern: Self::DataType) -> Option<Self::Item> {
         let trimmed_pattern = pattern.trim();
-        
+
         let val = self
             .data
             .iter()
@@ -140,7 +139,6 @@ impl Consumable for ConsumableVec<String> {
             .map(|x| x.to_string())
             .collect::<Vec<Self::DataType>>();
 
-        
         // remove all values just consumed
         // nighlty rust has drain_filter which could do
         // filtering and removal in one step
@@ -154,17 +152,16 @@ impl Consumable for ConsumableVec<String> {
     }
 }
 
-
 /// Generic structure for storing consumable data of type T in a shared Vector
-/// 
-/// This implementation is using atomic referenc counting (`Arc`) as well as 
+///
+/// This implementation is using atomic referenc counting (`Arc`) as well as
 /// mutual exclusion (`Mutex`) to allow concurrent access to the inner data.
 ///
 /// Consumed data will be removed from the data pool. Consecutive consume calls
 /// with an identical pattern will most likely return `None`, when no new data got
 /// produced
 ///
-/// ## Example: 
+/// ## Example:
 /// ```
 /// use consumable_vec::{SharedConsumableVec, Consumable};
 /// use std::thread;
@@ -172,7 +169,7 @@ impl Consumable for ConsumableVec<String> {
 /// let con_vec = SharedConsumableVec::new(None);
 ///
 /// let producer = con_vec.clone();
-/// 
+///
 /// thread::spawn(move || {
 ///     for n in 1..100 {
 ///         producer.add(format!("Produced: {}", n));
@@ -190,9 +187,9 @@ impl Consumable for ConsumableVec<String> {
 ///    }   
 /// });
 /// ```
-/// 
-/// 
-#[derive(Debug,Clone)]
+///
+///
+#[derive(Debug, Clone)]
 pub struct SharedConsumableVec<T> {
     data: Arc<Mutex<ConsumableVec<T>>>,
 }
@@ -229,12 +226,10 @@ impl Consumable for SharedConsumableVec<String> {
     type Item = ConsumableVec<String>;
     type DataType = String;
 
-    fn consume(&self, pattern: Self::DataType) 
-     -> Option<Self::Item> {
+    fn consume(&self, pattern: Self::DataType) -> Option<Self::Item> {
         self.data.lock().unwrap().consume_mut(pattern)
     }
 }
-
 
 #[cfg(test)]
 mod test_at_replies {
@@ -288,10 +283,9 @@ mod test_at_replies {
     }
 }
 
-
 #[cfg(test)]
 mod test_shared_at_replies {
- 
+
     use super::*;
     use len_trait::Len;
 
