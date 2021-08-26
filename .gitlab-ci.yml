@@ -1,0 +1,88 @@
+stages:
+  - coverage  
+  - build
+  - audit
+  - pages
+  
+
+
+variables:
+  http_proxy: "$CODE_PROXY"
+  https_proxy: "$CODE_PROXY"
+  no_proxy: "devops.bt.siemens.com,code.siemens.com,s3.dualstack.eu-central-1.amazonaws.com,127.0.0.1,localhost,.siemens.de,.siemens.net,.siemens.com,.siemens.io"
+  output_folder: output
+  coverage_container: "docker.siemens.com/rtos-expert-center/rust_explorations/testinginrust/coverage"
+
+# Use cargo to build the project
+build:
+  stage: build
+  image: "rust:latest"
+  before_script:
+    - mkdir -p $output_folder
+    - apt-get update --yes 
+    - apt-get install --yes cmake
+  script:
+    - mkdir $output_folder/linux
+    - cargo build  --release
+    - mv target/release/$binary_name output/linux/$binary_name
+  artifacts:
+    paths:
+      - $output_folder
+
+# Coverage configuration taken from: https://www.collabora.com/news-and-blog/blog/2021/03/24/rust-integrating-llvm-source-base-code-coverage-with-gitlab/
+coverage:
+  stage: coverage
+  # nightly needed for Z option on grcov, but not a known image
+  image: "$coverage_container:latest"
+  script:
+    - LLVM_PROFILE_FILE="profiled.profraw" cargo test --verbose
+    - grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing --ignore "/*" -o ./htmlcov/
+    - grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o coverage.info
+    - python3 /usr/local/lib/python3.7/dist-packages/lcov_cobertura.py coverage.info -o coverage.xml
+    - lcov --summary coverage.info
+  artifacts:
+    expose_as: 'Coverage report'
+    paths:
+      - htmlcov/
+    reports:
+      cobertura: coverage.xml
+  coverage: '/\s*lines\.*:\s*([\d\.]+%)/'
+
+SecurityAudit:
+  stage: audit
+  image: "rust:latest"
+  script:
+    - cargo install --force cargo-audit
+    - cargo generate-lockfile
+    - cargo audit
+    - cargo audit --json >> security_audit.json
+  artifacts:
+    paths:
+      - security_audit.json
+  only:
+    - schedules
+    - main
+
+pages:
+  stage: pages
+  image: "rust:latest"
+  before_script:
+    - apt-get update
+    - apt-get install --yes graphviz git cmake
+  script:
+    - mkdir public
+    - mkdir public/static_images
+    - cargo doc --no-deps
+    - mv target/doc/* public/
+    # For a workspace an index.html needs to be added to point to the first crate to show
+    - echo '<meta http-equiv="refresh" content="0; url=consumable_vec/index.html">' > public/index.html
+  artifacts:
+    paths:
+        - public
+  only:
+    - main
+
+cache:
+  paths:
+    - target/
+    
