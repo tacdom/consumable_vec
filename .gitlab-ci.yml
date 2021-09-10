@@ -38,7 +38,7 @@ coverage:
     - LLVM_PROFILE_FILE="profiled.profraw" cargo test --verbose
     - grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing --ignore "/*" -o ./htmlcov/
     - grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o coverage.info
-    - python3 /usr/local/lib/python3.7/dist-packages/lcov_cobertura.py coverage.info -o coverage.xml
+    - python3 /usr/local/bin/lcov_cobertura coverage.info -o coverage.xml
     - lcov --summary coverage.info
   artifacts:
     expose_as: 'Coverage report'
