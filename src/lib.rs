@@ -25,7 +25,7 @@ use std::sync::{Arc, Mutex};
 
 /// Consume content from a data collection
 ///
-/// Consumption can be inmplemented in a mutabl or immutable way, or both.
+/// Consumption can be implemented in a mutable or immutable way, or both.
 /// Which implementation needs to be used is dependent on the using application.
 ///
 ///
@@ -140,7 +140,7 @@ impl Consumable for ConsumableVec<String> {
             .collect::<Vec<Self::DataType>>();
 
         // remove all values just consumed
-        // nighlty rust has drain_filter which could do
+        // nightly rust has drain_filter which could do
         // filtering and removal in one step
         self.data.retain(|d| !d.starts_with(trimmed_pattern));
 

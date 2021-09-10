@@ -9,7 +9,7 @@
 
 ## Concept
 
-The crate offers a trait for data consumption as well as an implementation for sahred and unshared consumable vectors.
+The crate offers a trait for data consumption as well as an implementation for shared and unshared consumable vectors.
 In both cases the idea is that producers can `add` data to a Vector at any time. When this data is consumed it is then 
 removed from the datapool.
 When using the unshared implementation, the caller has to take care of the ownership of the data to allow mutable access
