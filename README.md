@@ -22,7 +22,7 @@ to it. When using the shared implementation, every user does get a Clone of the 
 
  int main() {
 
- let con_vec = SharedConsumableVec::new(None);
+ let con_vec = SharedConsumableVec::default();
 
  let producer = con_vec.clone();
  let consumer = con_vec.clone();
@@ -47,15 +47,21 @@ to it. When using the shared implementation, every user does get a Clone of the 
 
  }
 ```
-#### License
 
-<sup>
+In the `examples`folder you will find a brief example on how to use `SharedConsumableVec`across threads.
+
+To run the example:
+```bash
+cargo run --example shared_vec
+```
+
+## License
+
 Licensed under <a href="LICENSE">MIT license</a> 
 
-<br>
 
-<sub>
+
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in Consumable_Vec by you, shall be licensed as above, without any 
 additional terms or conditions.
-</sub>
+
