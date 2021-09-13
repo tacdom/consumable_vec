@@ -168,7 +168,7 @@ impl Consumable for ConsumableVec<String> {
         // remove all values just consumed
         // nightly rust has drain_filter which could do
         // filtering and removal in one step
-        self.data.retain(|d| !d.starts_with(trimmed_pattern));
+        self.data.retain(|d| !d.trim().starts_with(trimmed_pattern));
 
         if !val.is_empty() {
             Some(ConsumableVec::new(Some(val)))
@@ -177,6 +177,13 @@ impl Consumable for ConsumableVec<String> {
         }
     }
 }
+
+impl Default for ConsumableVec<String> {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+
 
 /// Generic structure for storing consumable data of type T in a shared Vector
 ///
@@ -244,21 +251,21 @@ mod test_at_replies {
 
     #[test]
     fn consume_when_pattern_not_in_replies_should_return_none() {
-        let mut at = ConsumableVec::new(None);
+        let mut at = ConsumableVec::default();
         at.add("data".to_string());
         assert!(at.consume_mut("pattern".to_string()).is_none());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_return_some() {
-        let mut at = ConsumableVec::new(None);
+        let mut at = ConsumableVec::default();
         at.add("data".to_string());
         assert!(at.consume_mut("da".to_string()).is_some());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_have_data() {
-        let mut at = ConsumableVec::new(None);
+        let mut at = ConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         let consumed = at.consume_mut("da".to_string()).unwrap();
@@ -268,7 +275,7 @@ mod test_at_replies {
 
     #[test]
     fn consume_when_pattern_in_replies_multiple_times_should_have_data_multipletimes() {
-        let mut at = ConsumableVec::new(None);
+        let mut at = ConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
@@ -279,7 +286,7 @@ mod test_at_replies {
 
     #[test]
     fn consume_should_remove_values_from_data() {
-        let mut at = ConsumableVec::new(None);
+        let mut at = ConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
@@ -297,21 +304,21 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_when_pattern_not_in_replies_should_return_none() {
-        let mut at = SharedConsumableVec::default();
+        let at = SharedConsumableVec::default();
         at.add("data".to_string());
         assert!(at.consume("pattern".to_string()).is_none());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_return_some() {
-        let mut at = SharedConsumableVec::default();
+        let at = SharedConsumableVec::default();
         at.add("data".to_string());
         assert!(at.consume("da".to_string()).is_some());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_have_data() {
-        let mut at = SharedConsumableVec::default();
+        let at = SharedConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         let consumed = at.consume("da".to_string()).unwrap();
@@ -321,7 +328,7 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_when_pattern_in_replies_multiple_times_should_have_data_multipletimes() {
-        let mut at = SharedConsumableVec::default();
+        let at = SharedConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
@@ -332,7 +339,7 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_should_remove_values_from_data() {
-        let mut at = SharedConsumableVec::default();
+        let at = SharedConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
