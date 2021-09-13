@@ -20,6 +20,32 @@
 //! data from it.    
 //! The struct `SharedConsumableVec` uses a `ConsumableVec` which can be referenced by multiple owners
 //! from multiple threads.
+//! ## Example:
+//! ```
+//! use consumable_vec::{SharedConsumableVec, Consumable};
+//! use std::thread;
+//!
+//! let con_vec = SharedConsumableVec::default();
+//!
+//! let producer = con_vec.clone();
+//!
+//! thread::spawn(move || {
+//!     for n in 1..100 {
+//!         producer.add(format!("Produced: {}", n));
+//!     }   
+//! });
+//!
+//! thread::spawn(move || {
+//!    loop {
+//!     if let Some(consumed) = con_vec.consume("Produced".to_string()) {
+//!         println!("{:?}", consumed);
+//!         if consumed.inner().iter().filter(|c| c.contains("99")).count() > 0 {
+//!             break;
+//!         }
+//!     }
+//!    }   
+//! });
+//! ```
 
 use std::sync::{Arc, Mutex};
 
@@ -161,32 +187,6 @@ impl Consumable for ConsumableVec<String> {
 /// with an identical pattern will most likely return `None`, when no new data got
 /// produced
 ///
-/// ## Example:
-/// ```
-/// use consumable_vec::{SharedConsumableVec, Consumable};
-/// use std::thread;
-///
-/// let con_vec = SharedConsumableVec::new(None);
-///
-/// let producer = con_vec.clone();
-///
-/// thread::spawn(move || {
-///     for n in 1..100 {
-///         producer.add(format!("Produced: {}", n));
-///     }   
-/// });
-///
-/// thread::spawn(move || {
-///    loop {
-///     if let Some(consumed) = con_vec.consume("Produced".to_string()) {
-///         println!("{:?}", consumed);
-///         if consumed.inner().iter().filter(|c| c.contains("99")).count() > 0 {
-///             break;
-///         }
-///     }
-///    }   
-/// });
-/// ```
 ///
 ///
 #[derive(Debug, Clone)]
@@ -228,6 +228,12 @@ impl Consumable for SharedConsumableVec<String> {
 
     fn consume(&self, pattern: Self::DataType) -> Option<Self::Item> {
         self.data.lock().unwrap().consume_mut(pattern)
+    }
+}
+
+impl Default for SharedConsumableVec<String> {
+    fn default() -> Self {
+        Self::new(None)
     }
 }
 
@@ -291,21 +297,21 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_when_pattern_not_in_replies_should_return_none() {
-        let mut at = SharedConsumableVec::new(None);
+        let mut at = SharedConsumableVec::default();
         at.add("data".to_string());
         assert!(at.consume("pattern".to_string()).is_none());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_return_some() {
-        let mut at = SharedConsumableVec::new(None);
+        let mut at = SharedConsumableVec::default();
         at.add("data".to_string());
         assert!(at.consume("da".to_string()).is_some());
     }
 
     #[test]
     fn consume_when_pattern_in_replies_should_have_data() {
-        let mut at = SharedConsumableVec::new(None);
+        let mut at = SharedConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         let consumed = at.consume("da".to_string()).unwrap();
@@ -315,7 +321,7 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_when_pattern_in_replies_multiple_times_should_have_data_multipletimes() {
-        let mut at = SharedConsumableVec::new(None);
+        let mut at = SharedConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
@@ -326,7 +332,7 @@ mod test_shared_at_replies {
 
     #[test]
     fn consume_should_remove_values_from_data() {
-        let mut at = SharedConsumableVec::new(None);
+        let mut at = SharedConsumableVec::default();
         at.add("data".to_string());
         at.add("ata".to_string());
         at.add("data2".to_string());
