@@ -184,7 +184,6 @@ impl Default for ConsumableVec<String> {
     }
 }
 
-
 /// Generic structure for storing consumable data of type T in a shared Vector
 ///
 /// This implementation is using atomic referenc counting (`Arc`) as well as

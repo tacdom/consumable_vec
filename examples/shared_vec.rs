@@ -1,6 +1,5 @@
 use consumable_vec::{Consumable, SharedConsumableVec};
-use std::{ thread, time::Duration};
-
+use std::{thread, time::Duration};
 
 fn main() {
     let con_vec = SharedConsumableVec::default();
